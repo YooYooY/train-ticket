@@ -1,15 +1,15 @@
 header {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  z-index: 2;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 2;
 }
 main {
-  padding-top: 44px;
+    padding-top: 44px;
 }
 
 .form {
-  padding: 5px 15px 0;
-  background-color: #fff;
+    padding: 5px 15px 0;
+    background-color: #fff;
 }
