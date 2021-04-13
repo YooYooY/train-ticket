@@ -1,10 +1,10 @@
 # react hook 重构去哪儿网
 
-使用 react hook 重构去哪儿购票网站，来自 [React劲爆新特性Hooks](https://coding.imooc.com/class/348.html);
+使用 react hook 重构去哪儿购票网站，来自 [React劲爆新特性Hooks](https://coding.imooc.com/class/348.html)
 
 ## 目标
 
- 熟练使用 reack hook 开发项目。
+使用 reack hook 熟练开发项目。
  
 ## 难点
 
@@ -21,8 +21,8 @@
  ### 参数
  - 开始时间（currentStartHours）
  - 结束时间（currentEndHours）
- - 修改开始时间后的回调（onStartChanged）
- - 修改结束时间后的回调（onEndChanged）
+ - 修改开始时间回调（onStartChanged）
+ - 修改结束时间回调（onEndChanged）
 
 
 ### 自定义hook
@@ -201,10 +201,20 @@ export default memo(function MySlider(props) {
 
 ### 优化技巧
 
-- 对于纯属性输入的组件，一般可以使用 `memo` 进行优化。
-- 对于会影响子组件重新渲染的方法，一般可以使用 `useCallback` 包裹，并添加对应依赖项。
+- 对于纯属性输入的组件，一般可以使用 `React.memo` 进行优化。
+- 对于会影响子组件重新渲染的方法，使用`useMemo`和`useCallback`包裹，并添加对应依赖项，避免重复执行没必要的方法。
 
 通过这个项目，对`useMemo`和`useCallback`的区别和作用有了更深刻的理解，`useMemo`返回依赖参数，`useCallback`返回依赖函数，可以类比vue中的计算属性`computed`。
+
+> 记住，传入 useMemo 的函数会在渲染期间执行。请不要在这个函数内部执行与渲染无关的操作，诸如副作用这类的操作属于 useEffect 的适用范畴，而不是 useMemo
+
+### useMemo 和 useCallback 的区别
+
+`useMemo` 和 `useCallback` 接收的参数都是一样，都是在其依赖项发生变化后才执行，都是返回缓存的值，区别在于 `useMemo` 返回的是函数运行的结果， `useCallback` 返回的是函数。
+
+### useMemo 和 memo 的区别
+
+`useMemo`在某些情况下不希望组件对所有 props 做浅比较，只想实现局部 Pure 功能，即只想对特定的 props 做比较，并决定是否局部更新
 
 ### 异步加载组件
 
@@ -268,3 +278,105 @@ function myReducer(state, action) {
 // 组件内部
 const [state, dispatch]=useReducer(myReducer,{open:false})
 ```
+
+### useRef
+
+useRef不仅可以用来管理`DOM ref`，它还相当于 this , 可以存放任何变量，解决闭包带来的不方便性。
+
+
+1.闭包问题：
+
+点击按钮后，再点击弹窗，接着再点按钮，弹框结果是1。
+
+```jsx
+import React, { useState, useEffect } from 'react'
+
+const Counter = () => {
+  const [count, setCount] = useState(0)
+
+  const handleCount = () => {
+    setTimeout(() => {
+      alert('current count: ' + count)
+    }, 3000);
+  }
+
+  return (
+    <div>
+      <p>current count: { count }</p>
+      <button onClick={() => setCount(count + 1)}>加</button>
+      <button onClick={() => handleCount()}>弹框显示</button>
+    </div>
+  )
+}
+```
+
+> 当我们更新状态的时候, React 会重新渲染组件, 每一次渲染都会拿到独立的 count 状态,  并重新渲染一个  handleCount 函数.  每一个 handleCount 里面都有它自己的 count 。
+
+useRef 改造：
+
+```js
+const Counter = () => {
+  const [count, setCount] = useState(0)
+  const countRef = useRef(count)
+
+  useEffect(() => {
+    countRef.current = count
+  })
+
+  const handleCount = () => {
+    setTimeout(() => {
+      alert('current count: ' + countRef.current)
+    }, 3000);
+  }
+
+  //...
+}
+```
+
+2、变更 `.current` 属性不会引发组件重新渲染，根据这个特性可以获取状态的前一个值：
+
+```js
+const Counter = () => {
+  const [count, setCount] = useState(0)
+  const preCountRef = useRef(count)
+
+  useEffect(() => {
+    preCountRef.current = count
+  })
+
+  return (
+    <div>
+      <p>pre count: { preCountRef.current }</p>
+      <p>current count: { count }</p>
+      <button onClick={() => setCount(count + 1)}>加</button>
+    </div>
+  )
+}
+```
+
+3.操作 Dom 节点，类似 createRef()：
+
+```js
+import React, { useRef } from 'react'
+
+const TextInput = () => {
+  const inputEl = useRef(null)
+
+  const onFocusClick = () => {
+    if(inputEl && inputEl.current) {
+      inputEl.current.focus()
+    } 
+  }
+
+  return (
+    <div>
+      <input type="text" ref={inputEl}/>
+      <button onClick={onFocusClick}>Focus the input</button>
+    </div>
+  )
+}
+```
+
+文章参考：
+
+[Typescript+React hooks开发](https://github.com/vortesnail/blog/issues/13)
